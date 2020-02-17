@@ -127,24 +127,29 @@ class Morpion {
 
             this.grille[coordY][coordX] = this.tourRond ? -1 : 1;
             this.tourRond               = !this.tourRond;
+            this.nbCoups++;
             this.mettreAJourPartie();
-            if (this.verifierFin()){
-                if(this.tourRond) {
+            switch (this.verifierFin()){
+                case 1: {
                     this.resultats[0]++;
                     this.finPartie(`${this.croix} gagne !`);
-                }else{
+                    break;
+                }
+                case -1 : {
                     this.resultats[1]++;
                     this.finPartie(`${this.ronds} gagne !`);
+                    break;
                 }
-                return;
+                case 0 : {
+                    this.resultats[2]++;
+                    this.finPartie('Égalité !');
+                    break;
+                }
+                case null : {
+                    if((this.bot && this.tourRond && this.nbCoups < this.grille.length*this.grille.length) || (this.debug))
+                        this.jouerCoup();
+                }
             }
-            else if(this.nbCoups === 24) {
-                this.resultats[2]++;
-                this.finPartie('Égalité !');
-                return;
-            }
-            this.nbCoups++;
-            if((this.bot && this.tourRond && this.nbCoups < this.grille.length*this.grille.length) || (this.debug) )this.jouerCoup();
         }
         /*Le coup n'est pas valide : le bot rejoue et le joueur doit recliquer*/
         else if(!evt)
@@ -153,27 +158,38 @@ class Morpion {
 
     /**
      *
-     * @returns {boolean} si le coup est gagnant ou non
+     * @returns {number} si le coup est gagnant ou non :
+     * 1    - croix gagne
+     * -1   - ronds gagne
+     * 0    - égalité
+     * null - le jeu n'est pas fini
      */
     verifierFin = ()=>{
         let len = this.grille.length-1;
         for (let i = 0; i <= len; i++) {
             for (let j = 0; j < 2; j++) {
                 /*Verification des lignes et colonnes*/
-                if ((Math.abs(this.grille[i][j] + this.grille[i][1 + j] + this.grille[i][2 + j] + this.grille[i][3 + j]) === 4) ||
-                    (Math.abs(this.grille[j][i] + this.grille[1 + j][i] + this.grille[2 + j][i] + this.grille[3 + j][i]) === 4))
-                    return true;
+                if ((this.grille[i][j] + this.grille[i][1 + j] + this.grille[i][2 + j] + this.grille[i][3 + j] === 4) ||
+                    (this.grille[j][i] + this.grille[1 + j][i] + this.grille[2 + j][i] + this.grille[3 + j][i]) === 4)
+                    return 1;
+                if ((this.grille[i][j] + this.grille[i][1 + j] + this.grille[i][2 + j] + this.grille[i][3 + j] === -4) ||
+                    (this.grille[j][i] + this.grille[1 + j][i] + this.grille[2 + j][i] + this.grille[3 + j][i]) === -4)
+                    return -1;
                 /*Verification des diagonales*/
                 if (i < 2) {
                     let diagHGBD = this.grille[i][j] + this.grille[i + 1][j + 1] + this.grille[i + 2][j + 2] + this.grille[i + 3][j + 3];
                     let diagBDHG = this.grille[j][i] + this.grille[j + 1][i + 1] + this.grille[j + 2][i + 2] + this.grille[j + 3][i + 3];
                     let diagHDBG = this.grille[i][len - j] + this.grille[i + 1][len - j - 1] + this.grille[i + 2][len - j - 2] + this.grille[i + 3][len - j - 3];
                     let diagBGHD = this.grille[len - j][len - i] + this.grille[len - j - 1][len - i - 1] + this.grille[len - j - 2][len - i - 2] + this.grille[len - j - 3][len - i - 3];
-                    if ((Math.abs(diagHGBD) === 4) || (Math.abs(diagBDHG) === 4) || (Math.abs(diagHDBG) === 4) || (Math.abs(diagBGHD) === 4))
-                        return true;
+                    if ((diagHGBD === 4) || (diagBDHG === 4) || (diagHDBG === 4) || (diagBGHD === 4))
+                        return 1;
+                    if ((diagHGBD === -4) || (diagBDHG === -4) || (diagHDBG === -4) || (diagBGHD === -4))
+                        return -1;
                 }
             }
         }
+        /*Aucun gagnant, on teste l'égalité*/
+        return this.nbCoups === 25 ? 0 : null;
     };
 
     finPartie = (message = null)=>{
