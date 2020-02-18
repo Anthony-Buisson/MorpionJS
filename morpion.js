@@ -4,7 +4,12 @@ let random = (min, max)=> Math.floor(Math.random() * (max+1 - min) + min);
 
 class Morpion {
 
+
     constructor(){
+        Morpion.CROIX = 1;
+        Morpion.RONDS = -1;
+        Morpion.NEUTRE = 0;
+
         this.canva = new GraphiquesMorpion(152);
         this.canva.dessinerGrille();
         this.canva.afficherPanneauControles();
@@ -117,15 +122,23 @@ class Morpion {
      * @param evt
      */
     jouerCoup = (evt)=>{
-        let coordX = evt ? Math.trunc(evt.layerX / this.canva.cellSize) : random(0, this.grille.length-1);
-        let coordY = evt ? Math.trunc(evt.layerY / this.canva.cellSize) : random(0, this.grille.length-1);
+        let coordX;
+        let coordY;
+        if(evt) {
+            coordX = Math.trunc(evt.layerX / this.canva.cellSize);
+            coordY = Math.trunc(evt.layerY / this.canva.cellSize);
+        }else{
+            let coords = this.meilleurCoup();
+            coordX = coords.i;
+            coordY = coords.j;
+        }
 
         /*Le coup est valide*/
-        if(this.grille[coordY][coordX] === 0) {
+        if(this.grille[coordY][coordX] === Morpion.NEUTRE) {
             this.canva.afficherJeton(coordX, coordY, this.tourRond);
             this.canva.afficherTour(this.resultats, !this.tourRond);
 
-            this.grille[coordY][coordX] = this.tourRond ? -1 : 1;
+            this.grille[coordY][coordX] = this.tourRond ? Morpion.RONDS : Morpion.CROIX;
             this.tourRond               = !this.tourRond;
             this.nbCoups++;
             this.mettreAJourPartie();
@@ -211,6 +224,65 @@ class Morpion {
         }else{
             this.canva.dessinerGrille();
             this.canva.canvas.onclick = this.jouerCoup;
+        }
+    };
+
+    meilleurCoup = ()=> {
+        // AI to make its turn
+        let bestScore = -Infinity;
+        let move;
+        for (let i = 0; i < this.grille.length; i++) {
+            for (let j = 0; j < this.grille.length; j++) {
+                // Is the spot available?
+                if (this.grille[i][j] === 0) {
+                    this.grille[i][j] = -1;
+                    let score = this.minimax( 0, false);
+                    this.grille[i][j] = 0;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        move = { i, j };
+                    }
+                }
+            }
+        }
+        return move;
+    };
+
+    minimax = (depth, isMaximizing)=> {
+        console.log(isMaximizing, depth);
+        let result = this.verifierFin();
+        if (result !== null) {
+            return result === -1 ? -1 : result === 1 ? 1 : 0;
+        }
+        if(depth >= 4) return 0;
+        if (isMaximizing) {
+            let bestScore = -Infinity;
+            for (let i = 0; i < this.grille.length; i++) {
+                for (let j = 0; j < this.grille.length; j++) {
+                    // Is the spot available?
+                    if (this.grille[i][j] === 0) {
+                        this.grille[i][j] = -1;
+                        let score = this.minimax(depth + 1, false);
+                        this.grille[i][j] = 0;
+                        bestScore = Math.max(score, bestScore);
+                    }
+                }
+            }
+            return bestScore;
+        } else {
+            let bestScore = Infinity;
+            for (let i = 0; i < this.grille.length; i++) {
+                for (let j = 0; j < this.grille.length; j++) {
+                    // Is the spot available?
+                    if (this.grille[i][j] === 0) {
+                        this.grille[i][j] = 1;
+                        let score = this.minimax(depth + 1, true);
+                        this.grille[i][j] = 0;
+                        bestScore = Math.min(score, bestScore);
+                    }
+                }
+            }
+            return bestScore;
         }
     };
 }
