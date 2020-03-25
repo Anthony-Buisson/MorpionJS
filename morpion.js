@@ -4,16 +4,15 @@ let random = (min, max)=> Math.floor(Math.random() * (max+1 - min) + min);
 
 class Morpion {
 
-
     constructor(){
         Morpion.CROIX = 1;
         Morpion.RONDS = -1;
         Morpion.NEUTRE = 0;
-
-        this.canva = new GraphiquesMorpion(152);
+        this.cellNumber = parseInt(document.querySelector('#morpionZone').getAttribute('morpionSize') ?? 5);
+        let cellWidth = parseInt(document.querySelector('#morpionZone').getAttribute('morpionCellWidth') ?? 152);
+        this.canva = new GraphiquesMorpion(this.cellNumber, cellWidth);
         this.canva.dessinerGrille();
         this.canva.afficherPanneauControles();
-
         if(!this.recupererAnciennePartie()) this.creerNouvelleSauvegarde();
         this.creerEvenements();
         this.canva.afficherTour(this.resultats, this.tourRond);
@@ -35,14 +34,13 @@ class Morpion {
         this.canva.inputRonds.onchange  = el => this.ronds = el.target.value;
     };
 
-    initialiserValeurs = ()=>{
-        this.grille = [
-            [0,0,0,0,0],
-            [0,0,0,0,0],
-            [0,0,0,0,0],
-            [0,0,0,0,0],
-            [0,0,0,0,0],
-        ];
+    initialiserValeurs = ()=> {
+        this.grille = new Array(this.cellNumber);
+        for (let i = 0; i < this.cellNumber; i++) {
+            let val = new Array(this.cellNumber);
+            val.fill(0);
+            this.grille[i] = val;
+        }
         [this.tourRond, this.gagnant, this.nbCoups] = [false, false, 0];
     };
 
@@ -62,7 +60,7 @@ class Morpion {
 
     recupererAnciennePartie = ()=>{
         let historiquePartie = JSON.parse(localStorage.getItem('morpion'));
-        if(!historiquePartie) return false;
+        if(!historiquePartie || historiquePartie.parties[historiquePartie.parties.length-1].grille.length !== this.cellNumber) return false;
         this.resultats              = historiquePartie.resultats;
         this.parties                = historiquePartie.parties;
         this.grille                 = this.parties[this.parties.length-1].grille;
@@ -180,7 +178,7 @@ class Morpion {
     verifierFin = ()=>{
         let len = this.grille.length-1;
         for (let i = 0; i <= len; i++) {
-            for (let j = 0; j < 2; j++) {
+            for (let j = 0; j < this.cellNumber-3; j++) {
                 /*Verification des lignes et colonnes*/
                 if ((this.grille[i][j] + this.grille[i][1 + j] + this.grille[i][2 + j] + this.grille[i][3 + j] === 4) ||
                     (this.grille[j][i] + this.grille[1 + j][i] + this.grille[2 + j][i] + this.grille[3 + j][i]) === 4)
@@ -189,7 +187,7 @@ class Morpion {
                     (this.grille[j][i] + this.grille[1 + j][i] + this.grille[2 + j][i] + this.grille[3 + j][i]) === -4)
                     return -1;
                 /*Verification des diagonales*/
-                if (i < 2) {
+                if (i < this.cellNumber-3) {
                     let diagHGBD = this.grille[i][j] + this.grille[i + 1][j + 1] + this.grille[i + 2][j + 2] + this.grille[i + 3][j + 3];
                     let diagBDHG = this.grille[j][i] + this.grille[j + 1][i + 1] + this.grille[j + 2][i + 2] + this.grille[j + 3][i + 3];
                     let diagHDBG = this.grille[i][len - j] + this.grille[i + 1][len - j - 1] + this.grille[i + 2][len - j - 2] + this.grille[i + 3][len - j - 3];
@@ -202,7 +200,7 @@ class Morpion {
             }
         }
         /*Aucun gagnant, on teste l'égalité*/
-        return this.nbCoups === 25 ? 0 : null;
+        return this.nbCoups === (this.cellNumber*this.cellNumber) ? 0 : null;
     };
 
     finPartie = (message = null)=>{
