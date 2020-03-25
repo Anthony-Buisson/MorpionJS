@@ -1,25 +1,29 @@
 export class GraphiquesMorpion {
 
-    constructor(cellNumber = 5, csize = 152){
+    constructor(csize = 0, cellNumberX = 0, cellNumberY = 0){
         if(csize % 2 !== 0) throw Error('La taille des cases doit être paire');
         this.canvas = document.querySelector('#morpionZone');
         this.ctx = this.canvas.getContext('2d');
-        this.cellNumber = cellNumber;
-        this.cellSize = csize; //doit etre paire
-        this.canvas.height = (this.cellSize*this.cellNumber+2);
-        this.canvas.width = (this.cellSize*this.cellNumber+2);
+        this.cellNumberX = cellNumberX > 0 ? cellNumberX : 5;
+        this.cellNumberY = cellNumberY > 0 ? cellNumberY : cellNumberX;
+        this.cellSize = csize > 0 ? csize : 122; //doit etre paire
+        this.canvas.height = (this.cellSize*this.cellNumberY+2);
+        this.canvas.width = (this.cellSize*this.cellNumberX+2);
     }
 
     dessinerGrille = ()=>{
         this.ctx.clearRect(0,0, this.canvas.width, this.canvas.height);
         this.ctx.lineWidth = 2;
         this.ctx.beginPath();
-        for (let i = 1; i < this.cellSize*(this.cellNumber+2); i+=this.cellSize) {
+        for (let i = 1; i < this.cellSize*(this.cellNumberX+2); i+=this.cellSize) {
+            this.ctx.stroke();
+            this.ctx.moveTo(i, 0);
+            this.ctx.lineTo(i, this.cellSize*this.cellNumberY);
+        }
+        for (let i = 1; i < this.cellSize*(this.cellNumberY+2); i+=this.cellSize) {
             this.ctx.stroke();
             this.ctx.moveTo(0, i);
-            this.ctx.lineTo(this.cellSize*this.cellNumber, i);
-            this.ctx.moveTo(i, 0);
-            this.ctx.lineTo(i, this.cellSize*this.cellNumber);
+            this.ctx.lineTo(this.cellSize*this.cellNumberX, i);
         }
         this.ctx.closePath();
     };
@@ -45,7 +49,7 @@ export class GraphiquesMorpion {
         this.controlsPanel = document.createElement('fieldset');
         this.controlsPanel.style.height = 'fit-content';
         this.controlsPanelLegend = document.createElement('legend');
-        this.controlsPanelLegend.innerHTML = `Morpion ${this.cellNumber}x${this.cellNumber}`;
+        this.controlsPanelLegend.innerHTML = `Morpion ${this.cellNumberX}x${this.cellNumberY}`;
         this.controlsPanel.append(this.controlsPanelLegend);
 
         this.labelCroix = document.createElement('label');

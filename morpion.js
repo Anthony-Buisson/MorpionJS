@@ -10,7 +10,7 @@ class Morpion {
         Morpion.NEUTRE = 0;
         this.cellNumber = parseInt(document.querySelector('#morpionZone').getAttribute('morpionSize') ?? 5);
         let cellWidth = parseInt(document.querySelector('#morpionZone').getAttribute('morpionCellWidth') ?? 152);
-        this.canva = new GraphiquesMorpion(this.cellNumber, cellWidth);
+        this.canva = new GraphiquesMorpion(cellWidth, this.cellNumber);
         this.canva.dessinerGrille();
         this.canva.afficherPanneauControles();
         if(!this.recupererAnciennePartie()) this.creerNouvelleSauvegarde();
