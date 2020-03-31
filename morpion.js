@@ -236,7 +236,7 @@ class Morpion {
                 // Is the spot available?
                 if (this.grille[j][i] === 0) {
                     this.grille[j][i] = Morpion.RONDS;
-                    let s = this.minimax( this.grille, this.nbCoups+1, 1, true);
+                    let s = this.minimax( this.grille, this.nbCoups+1, 0, true);
                     this.grille[j][i] = 0;
                     if (s < bs) {
                         bs = s;
@@ -249,18 +249,18 @@ class Morpion {
         return move;
     };
 
-    minimax = (grid, coups,depth, isMaximizing, alpha = -Infinity, beta = Infinity) => {
+    minimax = (grid, coups,depth, isMaximizing, alpha = Infinity, beta = -Infinity) => {
         let board = JSON.parse(JSON.stringify(grid));
         let result = this.verifierFin(board, coups);
         if (result !== null) return result;
-        if(depth > 4) return isMaximizing ? -999 : 999;
+        if(depth > 5) return isMaximizing ? -999 : 999;
         if (isMaximizing) {
             let bestScore = -Infinity;
             for (let i = 0; i < board.length; i++) {
                 for (let j = 0; j < board.length; j++) {
                     if (board[j][i] === 0) {
                         board[j][i] = Morpion.CROIX;
-                        if(beta<=alpha){
+                        if(beta>=alpha){
                             board[j][i]= Morpion.NEUTRE;
                             continue;
                         }
@@ -268,7 +268,7 @@ class Morpion {
                         board[j][i] = 0;
                         if(score > bestScore) {
                             bestScore = score;
-                            alpha = bestScore
+                            beta = bestScore
                         }
                     }
                 }
@@ -280,7 +280,7 @@ class Morpion {
                 for (let j = 0; j < board.length; j++) {
                     if (board[j][i] === 0) {
                         board[j][i] = Morpion.RONDS;
-                        if(beta<=alpha){
+                        if(beta>=alpha){
                             board[j][i]= Morpion.NEUTRE;
                             continue;
                         }
@@ -288,7 +288,7 @@ class Morpion {
                         board[j][i] = 0;
                         if(score < bestScore) {
                             bestScore = score;
-                            beta = bestScore
+                            alpha = bestScore
                         }
                     }
                 }
