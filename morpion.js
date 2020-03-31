@@ -1,4 +1,4 @@
-import {GraphiquesMorpion} from './GraphiquesMorpion.js';
+import {GraphiquesMorpion} from './graphiquesMorpion.js';
 
 let random = (min, max)=> Math.floor(Math.random() * (max+1 - min) + min);
 
