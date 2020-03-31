@@ -127,6 +127,7 @@ class Morpion {
             coordY = Math.trunc(evt.layerY / this.canva.cellSize);
         }else{
             let coords = this.meilleurCoup();
+            console.log(coords.i+' j : '+ coords.j)
             coordX = coords.i;
             coordY = coords.j;
         }
@@ -157,14 +158,15 @@ class Morpion {
                     break;
                 }
                 case null : {
-                    if((this.bot && this.tourRond && this.nbCoups < this.grille.length*this.grille.length) || (this.debug))
+                    if((this.bot && this.tourRond && this.nbCoups < this.grille.length*this.grille.length) || (this.debug)) {
                         this.jouerCoup();
+                    }
                 }
             }
         }
         /*Le coup n'est pas valide : le bot rejoue et le joueur doit recliquer*/
         else if(!evt)
-            this.jouerCoup();
+            console.error('Meilleur coup invalide !')
     };
 
     /**
@@ -175,23 +177,23 @@ class Morpion {
      * 0    - égalité
      * null - le jeu n'est pas fini
      */
-    verifierFin = ()=>{
-        let len = this.grille.length-1;
+    verifierFin = (grille = this.grille, nbCoups = this.nbCoups)=>{
+        let len = grille.length-1;
         for (let i = 0; i <= len; i++) {
             for (let j = 0; j < this.cellNumber-3; j++) {
                 /*Verification des lignes et colonnes*/
-                if ((this.grille[i][j] + this.grille[i][1 + j] + this.grille[i][2 + j] + this.grille[i][3 + j] === 4) ||
-                    (this.grille[j][i] + this.grille[1 + j][i] + this.grille[2 + j][i] + this.grille[3 + j][i]) === 4)
+                if ((grille[i][j] + grille[i][1 + j] + grille[i][2 + j] + grille[i][3 + j] === 4) ||
+                    (grille[j][i] + grille[1 + j][i] + grille[2 + j][i] + grille[3 + j][i]) === 4)
                     return 1;
-                if ((this.grille[i][j] + this.grille[i][1 + j] + this.grille[i][2 + j] + this.grille[i][3 + j] === -4) ||
-                    (this.grille[j][i] + this.grille[1 + j][i] + this.grille[2 + j][i] + this.grille[3 + j][i]) === -4)
+                if ((grille[i][j] + grille[i][1 + j] + grille[i][2 + j] + grille[i][3 + j] === -4) ||
+                    (grille[j][i] + grille[1 + j][i] + grille[2 + j][i] + grille[3 + j][i]) === -4)
                     return -1;
                 /*Verification des diagonales*/
                 if (i < this.cellNumber-3) {
-                    let diagHGBD = this.grille[i][j] + this.grille[i + 1][j + 1] + this.grille[i + 2][j + 2] + this.grille[i + 3][j + 3];
-                    let diagBDHG = this.grille[j][i] + this.grille[j + 1][i + 1] + this.grille[j + 2][i + 2] + this.grille[j + 3][i + 3];
-                    let diagHDBG = this.grille[i][len - j] + this.grille[i + 1][len - j - 1] + this.grille[i + 2][len - j - 2] + this.grille[i + 3][len - j - 3];
-                    let diagBGHD = this.grille[len - j][len - i] + this.grille[len - j - 1][len - i - 1] + this.grille[len - j - 2][len - i - 2] + this.grille[len - j - 3][len - i - 3];
+                    let diagHGBD = grille[i][j] + grille[i + 1][j + 1] + grille[i + 2][j + 2] + grille[i + 3][j + 3];
+                    let diagBDHG = grille[j][i] + grille[j + 1][i + 1] + grille[j + 2][i + 2] + grille[j + 3][i + 3];
+                    let diagHDBG = grille[i][len - j] + grille[i + 1][len - j - 1] + grille[i + 2][len - j - 2] + grille[i + 3][len - j - 3];
+                    let diagBGHD = grille[len - j][len - i] + grille[len - j - 1][len - i - 1] + grille[len - j - 2][len - i - 2] + grille[len - j - 3][len - i - 3];
                     if ((diagHGBD === 4) || (diagBDHG === 4) || (diagHDBG === 4) || (diagBGHD === 4))
                         return 1;
                     if ((diagHGBD === -4) || (diagBDHG === -4) || (diagHDBG === -4) || (diagBGHD === -4))
@@ -200,7 +202,7 @@ class Morpion {
             }
         }
         /*Aucun gagnant, on teste l'égalité*/
-        return this.nbCoups === (this.cellNumber*this.cellNumber) ? 0 : null;
+        return nbCoups === (this.cellNumber*this.cellNumber) ? 0 : null;
     };
 
     finPartie = (message = null)=>{
@@ -227,56 +229,67 @@ class Morpion {
 
     meilleurCoup = ()=> {
         // AI to make its turn
-        let bestScore = -Infinity;
+        let bs = Infinity;
         let move;
         for (let i = 0; i < this.grille.length; i++) {
             for (let j = 0; j < this.grille.length; j++) {
                 // Is the spot available?
-                if (this.grille[i][j] === 0) {
-                    this.grille[i][j] = -1;
-                    let score = this.minimax( 0, false);
-                    this.grille[i][j] = 0;
-                    if (score > bestScore) {
-                        bestScore = score;
-                        move = { i, j };
+                if (this.grille[j][i] === 0) {
+                    this.grille[j][i] = Morpion.RONDS;
+                    let s = this.minimax( this.grille, this.nbCoups+1, 1, true);
+                    this.grille[j][i] = 0;
+                    if (s < bs) {
+                        bs = s;
+                        move = {i: i,j: j };
                     }
                 }
             }
         }
+        console.log('Prediction : ', bs);
         return move;
     };
 
-    minimax = (depth, isMaximizing)=> {
-        console.log(isMaximizing, depth);
-        let result = this.verifierFin();
-        if (result !== null) {
-            return result === -1 ? -1 : result === 1 ? 1 : 0;
-        }
-        if(depth >= 4) return 0;
+    minimax = (grid, coups,depth, isMaximizing, alpha = -Infinity, beta = Infinity) => {
+        let board = JSON.parse(JSON.stringify(grid));
+        let result = this.verifierFin(board, coups);
+        if (result !== null) return result;
+        if(depth > 4) return isMaximizing ? -999 : 999;
         if (isMaximizing) {
             let bestScore = -Infinity;
-            for (let i = 0; i < this.grille.length; i++) {
-                for (let j = 0; j < this.grille.length; j++) {
-                    // Is the spot available?
-                    if (this.grille[i][j] === 0) {
-                        this.grille[i][j] = -1;
-                        let score = this.minimax(depth + 1, false);
-                        this.grille[i][j] = 0;
-                        bestScore = Math.max(score, bestScore);
+            for (let i = 0; i < board.length; i++) {
+                for (let j = 0; j < board.length; j++) {
+                    if (board[j][i] === 0) {
+                        board[j][i] = Morpion.CROIX;
+                        if(beta<=alpha){
+                            board[j][i]= Morpion.NEUTRE;
+                            continue;
+                        }
+                        let score = parseInt(this.minimax(board,coups+1,depth + 1, false, alpha, beta));
+                        board[j][i] = 0;
+                        if(score > bestScore) {
+                            bestScore = score;
+                            alpha = bestScore
+                        }
                     }
                 }
             }
             return bestScore;
         } else {
             let bestScore = Infinity;
-            for (let i = 0; i < this.grille.length; i++) {
-                for (let j = 0; j < this.grille.length; j++) {
-                    // Is the spot available?
-                    if (this.grille[i][j] === 0) {
-                        this.grille[i][j] = 1;
-                        let score = this.minimax(depth + 1, true);
-                        this.grille[i][j] = 0;
-                        bestScore = Math.min(score, bestScore);
+            for (let i = 0; i < board.length; i++) {
+                for (let j = 0; j < board.length; j++) {
+                    if (board[j][i] === 0) {
+                        board[j][i] = Morpion.RONDS;
+                        if(beta<=alpha){
+                            board[j][i]= Morpion.NEUTRE;
+                            continue;
+                        }
+                        let score = parseInt(this.minimax( board,coups+1, depth + 1, true, alpha, beta));
+                        board[j][i] = 0;
+                        if(score < bestScore) {
+                            bestScore = score;
+                            beta = bestScore
+                        }
                     }
                 }
             }
