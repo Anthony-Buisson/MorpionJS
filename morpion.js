@@ -233,29 +233,27 @@ class Morpion {
         let move;
         for (let i = 0; i < this.grille.length; i++) {
             for (let j = 0; j < this.grille.length; j++) {
-                // Is the spot available?
                 if (this.grille[j][i] === 0) {
                     this.grille[j][i] = Morpion.RONDS;
-                    let s = this.minimax( this.grille, this.nbCoups+1, 0, true);
+                    let s = this.minimax( this.grille, this.nbCoups+1, 0, false);
                     this.grille[j][i] = 0;
                     if (s < bs) {
                         bs = s;
-                        move = {i: i,j: j };
+                        move = {i,j };
                     }
                 }
             }
         }
-        console.log('Prediction : ', bs);
         return move;
     };
 
     minimax = (grid, coups,depth, isMaximizing, alpha = Infinity, beta = -Infinity) => {
         let board = JSON.parse(JSON.stringify(grid));
         let result = this.verifierFin(board, coups);
-        if (result !== null) return result;
-        if(depth > 5) return isMaximizing ? -999 : 999;
-        if (isMaximizing) {
-            let bestScore = -Infinity;
+        if (result === 1 || result === -1 || result === 0) return result;
+        if(depth > 3) return isMaximizing ? 1: -1;
+        if (!isMaximizing) {
+            let maxScore = -Infinity;
             for (let i = 0; i < board.length; i++) {
                 for (let j = 0; j < board.length; j++) {
                     if (board[j][i] === 0) {
@@ -264,18 +262,18 @@ class Morpion {
                             board[j][i]= Morpion.NEUTRE;
                             continue;
                         }
-                        let score = parseInt(this.minimax(board,coups+1,depth + 1, false, alpha, beta));
+                        let score = parseInt(this.minimax(board,coups+1,depth + 1, true, alpha, beta));
                         board[j][i] = 0;
-                        if(score > bestScore) {
-                            bestScore = score;
-                            beta = bestScore
+                        if(score > maxScore) {
+                            maxScore = score;
+                            beta = maxScore
                         }
                     }
                 }
             }
-            return bestScore;
+            return maxScore;
         } else {
-            let bestScore = Infinity;
+            let minScore = Infinity;
             for (let i = 0; i < board.length; i++) {
                 for (let j = 0; j < board.length; j++) {
                     if (board[j][i] === 0) {
@@ -284,16 +282,16 @@ class Morpion {
                             board[j][i]= Morpion.NEUTRE;
                             continue;
                         }
-                        let score = parseInt(this.minimax( board,coups+1, depth + 1, true, alpha, beta));
+                        let score = parseInt(this.minimax( board,coups+1, depth + 1, false, alpha, beta));
                         board[j][i] = 0;
-                        if(score < bestScore) {
-                            bestScore = score;
-                            alpha = bestScore
+                        if(score < minScore) {
+                            minScore = score;
+                            alpha = minScore
                         }
                     }
                 }
             }
-            return bestScore;
+            return minScore;
         }
     };
 }
